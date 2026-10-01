@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usability Tracker | HCI Project</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--text:#1d2433;--muted:#667085;--line:#e1e5ee;--accent:#3b5bdb;--ok:#2f9e44;--warn:#f08c00;--bad:#e03131}
+[data-theme="dark"]{--bg:#12151c;--card:#1c212c;--text:#e7eaf2;--muted:#9aa4b8;--line:#2d3444;--accent:#748ffc}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+h1{font-size:1.15rem;margin:0}
+nav{display:flex;flex-wrap:wrap;gap:6px;padding:12px 24px 0}
+nav button{background:none;border:1px solid var(--line);color:var(--text);padding:8px 14px;border-radius:8px 8px 0 0;cursor:pointer}
+nav button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+main{padding:16px 24px 48px;max-width:1100px;margin:auto}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+h2{margin:0 0 12px;font-size:1.05rem}h3{margin:16px 0 8px;font-size:.95rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--bg);border-radius:10px;padding:14px;text-align:center}
+.stat span{display:block;font-size:1.6rem;font-weight:700;color:var(--accent)}
+.stat small{color:var(--muted)}
+label{display:block;font-size:.85rem;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:inherit}
+input[type=radio]{width:auto}
+button{font:inherit}
+.btn{background:var(--accent);color:#fff;border:0;padding:9px 16px;border-radius:8px;cursor:pointer;margin:10px 8px 0 0}
+.btn.ok{background:var(--ok)}.btn.warn{background:var(--warn)}.btn.bad{background:var(--bad)}.btn.ghost{background:var(--bg);color:var(--text);border:1px solid var(--line)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+#sessionStatus{font-size:.85rem;color:var(--muted)}#sessionStatus.active{color:var(--ok);font-weight:600}
+.task-card{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.task-card h3{margin:0 0 4px}.task-card p{margin:4px 0}
+.event-item{display:flex;gap:12px;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--line);font-size:.85rem}
+#eventLog{max-height:340px;overflow:auto}
+.sus-q{padding:8px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.sus-q label{display:inline;margin:0 10px 0 0;color:var(--text)}
+.usability-score{font-size:3rem;font-weight:800}.usability-score.excellent{color:var(--ok)}.usability-score.good{color:var(--warn)}.usability-score.needs-improvement{color:var(--bad)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:12px 0}
+.metrics div{background:var(--bg);padding:10px;border-radius:8px}.metrics span{display:block;font-size:1.2rem}
+#susResult{font-weight:700;margin-top:10px}
+.sandbox{border:2px dashed var(--line);border-radius:10px;padding:14px}
+.sandbox a{margin-right:14px;color:var(--accent)}
+#loadError{display:none;background:var(--bad);color:#fff;padding:14px 24px}
+</style>
+</head>
+<body>
+
+<div id="loadError">Could not load <b>usability-tracker.js</b>. Put it in the same folder as this HTML file and reload.</div>
+
+<header>
+  <div><h1>Usability Tracker</h1><span id="sessionStatus">○ No Active Session</span></div>
+  <button id="themeToggle" class="btn ghost" style="margin:0">Toggle theme</button>
+</header>
+
+<nav id="tabs">
+  <button data-tab="dashboard" class="on">Dashboard</button>
+  <button data-tab="setup">Setup</button>
+  <button data-tab="run">Run Test</button>
+  <button data-tab="evaluate">Evaluate</button>
+  <button data-tab="reports">Reports</button>
+  <button data-tab="data">Data</button>
+</nav>
+
+<main>
+
+<!-- DASHBOARD -->
+<section class="tab on" id="tab-dashboard">
+  <div class="card">
+    <h2>Overview</h2>
+    <div class="grid">
+      <div class="stat"><span id="totalUsers">0</span><small>Users</small></div>
+      <div class="stat"><span id="totalSessions">0</span><small>Sessions</small></div>
+      <div class="stat"><span id="totalTasks">0</span><small>Tasks attempted</small></div>
+      <div class="stat"><span id="completionRate">0%</span><small>Completion rate</small></div>
+      <div class="stat"><span id="averageTime">0s</span><small>Avg. session time</small></div>
+      <div class="stat"><span id="averageClicks">0</span><small>Avg. clicks</small></div>
+      <div class="stat"><span id="averageErrors">0</span><small>Avg. errors</small></div>
+      <div class="stat"><span id="usabilityScore">N/A</span><small>Avg. usability score</small></div>
+    </div>
+    <button id="refreshDashboard" class="btn">Refresh</button>
+  </div>
+  <div class="card">
+    <h2>How to use</h2>
+    <ol>
+      <li><b>Setup:</b> add participants and tasks (a demo user, test and 3 tasks are pre-loaded).</li>
+      <li><b>Run Test:</b> pick user, test and task, then start the session. Clicks, scrolls, errors and time are tracked.</li>
+      <li>Finish the task, then fill in the <b>SUS</b> questionnaire and <b>heuristic</b> findings.</li>
+      <li>Generate a <b>report</b>, then export CSV/JSON from <b>Data</b>.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- SETUP -->
+<section class="tab" id="tab-setup">
+  <div class="row">
+    <div class="card">
+      <h2>Add participant</h2>
+      <form id="userForm">
+        <label>Name</label><input id="userName" required>
+        <label>Email (optional)</label><input id="userEmail" type="email">
+        <label>Age (optional)</label><input id="userAge" type="number" min="1" max="120">
+        <button class="btn" type="submit">Create user</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Create task</h2>
+      <form id="taskForm">
+        <label>Title</label><input id="taskTitle" required>
+        <label>Description</label><textarea id="taskDescription" rows="3"></textarea>
+        <label>Expected page / path</label><input id="expectedPage" placeholder="/admissions">
+        <label>Maximum time (seconds)</label><input id="maximumTime" type="number" value="120" min="10">
+        <button class="btn" type="submit">Create task</button>
+      </form>
+    </div>
+  </div>
+  <div class="card"><h2>Tasks</h2><div id="taskList"></div></div>
+</section>
+
+<!-- RUN TEST -->
+<section class="tab" id="tab-run">
+  <div class="card">
+    <h2>Start a testing session</h2>
+    <form id="startSessionForm">
+      <div class="row">
+        <div><label>Participant</label><select id="sessionUser"></select></div>
+        <div><label>Test</label><select id="sessionTest"></select></div>
+        <div><label>Task</label><select id="sessionTask"></select></div>
+      </div>
+      <button class="btn" type="submit">Start session</button>
+    </form>
+    <button id="completeTask" class="btn ok">Task completed</button>
+    <button id="abandonTask" class="btn warn">Task failed / abandoned</button>
+    <button id="endSession" class="btn bad">End session</button>
+  </div>
+  <div class="card">
+    <h2>Practice interface</h2>
+    <p style="color:var(--muted);margin-top:0">Interact here while a session is active to see events recorded.</p>
+    <div class="sandbox">
+      <a href="#admissions">Admissions</a><a href="#fees">Fees</a><a href="#contact">Contact</a>
+      <br><br>
+      <button class="btn ghost" style="margin:0" onclick="Tracker.recordCustomError('Simulated user error','practice')">Trigger test error</button>
+    </div>
+  </div>
+</section>
+
+<!-- EVALUATE -->
+<section class="tab" id="tab-evaluate">
+  <div class="card">
+    <h2>System Usability Scale (SUS)</h2>
+    <p style="color:var(--muted);margin-top:0">1 = strongly disagree, 5 = strongly agree. Requires an active session to save.</p>
+    <form id="susForm">
+      <div id="susQuestions"></div>
+      <label>Comments</label><textarea id="feedbackComment" rows="3"></textarea>
+      <button class="btn" type="submit">Calculate SUS</button>
+      <div id="susResult"></div>
+    </form>
+  </div>
+  <div class="card">
+    <h2>Nielsen heuristic evaluation</h2>
+    <form id="heuristicForm">
+      <label>Heuristic</label><select id="heuristic" required></select>
+      <label>Problem found</label><textarea id="heuristicProblem" rows="3"></textarea>
+      <label>Severity</label>
+      <select id="severity">
+        <option value="0">0 - No problem</option><option value="1">1 - Cosmetic</option>
+        <option value="2" selected>2 - Minor</option><option value="3">3 - Major</option><option value="4">4 - Critical</option>
+      </select>
+      <label>Recommendation</label><textarea id="recommendation" rows="2"></textarea>
+      <button class="btn" type="submit">Save evaluation</button>
+    </form>
+  </div>
+</section>
+
+<!-- REPORTS -->
+<section class="tab" id="tab-reports">
+  <div class="card">
+    <h2>Session report</h2>
+    <p style="color:var(--muted);margin-top:0">Generate while the session is still active (before ending it).</p>
+    <button id="generateReport" class="btn">Generate report</button>
+    <div id="reportContainer"></div>
+  </div>
+</section>
+
+<!-- DATA -->
+<section class="tab" id="tab-data">
+  <div class="card">
+    <h2>Export</h2>
+    <button id="exportEvents" class="btn">Events CSV</button>
+    <button id="exportSessions" class="btn">Sessions CSV</button>
+    <button id="exportFeedback" class="btn">Feedback CSV</button>
+    <button id="exportHeuristics" class="btn">Heuristics CSV</button>
+    <button class="btn ghost" onclick="UsabilityTracker.exportDatabase()">Full database (JSON)</button>
+    <h3>Import database (JSON)</h3>
+    <input type="file" accept="application/json" onchange="UsabilityTracker.importDatabase(this.files[0])">
+    <h3>Danger zone</h3>
+    <button id="resetDatabase" class="btn bad" style="margin-top:0">Delete all data</button>
+  </div>
+  <div class="card">
+    <h2>Latest events (100)</h2>
+    <button class="btn ghost" style="margin-top:0" onclick="renderEventLog('#eventLog')">Refresh log</button>
+    <div id="eventLog"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- Your project script (keep in the same folder as this file) -->
+<script src="usability-tracker.js" onerror="document.getElementById('loadError').style.display='block'"></script>
+
+<script>
+/* Page glue: tabs, SUS questions, refresh hooks. Does not modify usability-tracker.js. */
+if (typeof APP_CONFIG !== "undefined") {
+  // Privacy: don't log raw keystrokes (they can capture passwords). Set to true to re-enable.
+  APP_CONFIG.tracking.keyboard = false;
+}
+
+var SUS_QUESTIONS = [
+  "I think that I would like to use this system frequently.",
+  "I found the system unnecessarily complex.",
+  "I thought the system was easy to use.",
+  "I think I would need technical support to use this system.",
+  "I found the various functions in this system well integrated.",
+  "I thought there was too much inconsistency in this system.",
+  "I imagine most people would learn to use this system very quickly.",
+  "I found the system very cumbersome to use.",
+  "I felt very confident using the system.",
+  "I needed to learn a lot of things before I could get going."
+];
+
+function buildSUS() {
+  var box = document.getElementById("susQuestions");
+  SUS_QUESTIONS.forEach(function (q, i) {
+    var n = i + 1, div = document.createElement("div");
+    div.className = "sus-q";
+    var p = document.createElement("div");
+    p.textContent = n + ". " + q;
+    div.appendChild(p);
+    for (var v = 1; v <= 5; v++) {
+      var l = document.createElement("label"), r = document.createElement("input");
+      r.type = "radio"; r.name = "sus" + n; r.value = v;
+      l.appendChild(r); l.appendChild(document.createTextNode(" " + v));
+      div.appendChild(l);
+    }
+    box.appendChild(div);
+  });
+}
+
+function refreshAll() {
+  if (typeof populateSelects !== "function") return;
+  populateSelects();
+  renderTaskList("#taskList");
+  renderEventLog("#eventLog");
+  DashboardInstance.refresh();
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  buildSUS();
+  document.querySelectorAll("#tabs button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("#tabs button").forEach(function (x) { x.classList.remove("on"); });
+      document.querySelectorAll(".tab").forEach(function (x) { x.classList.remove("on"); });
+      b.classList.add("on");
+      document.getElementById("tab-" + b.dataset.tab).classList.add("on");
+      refreshAll();
+    });
+  });
+  ["userForm", "taskForm", "startSessionForm"].forEach(function (id) {
+    document.getElementById(id).addEventListener("submit", function () { setTimeout(refreshAll, 0); });
+  });
+});
+</script>
+</body>
+</html>
